@@ -1,0 +1,159 @@
+---
+title: "Exploratory analyses of tooth growth data"
+author: "Yevgeny V.Yorkhov"
+date: "04/26/2015"
+output: pdf_document
+---
+## Overview
+Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package. 
+
+1. Load the ToothGrowth data and perform some basic exploratory data analyses 
+2. Provide a basic summary of the data.
+3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+4. State your conclusions and the assumptions needed for your conclusions. 
+
+## Load data and perform some basic exploratory data analysis
+
+```{r, load_data}
+library(ggplot2)
+library(datasets)
+data(ToothGrowth)
+
+dim(ToothGrowth) # dimension of the dataframe
+head(ToothGrowth) # first some rows from the dataframe
+```
+
+#### Descrition
+Dataframe consist of 60 observations on three variables: the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+
+1. len - numeric, Tooth length
+2. supp - factor, Supplement type (VC or OJ)
+3. dose - numeric, Dose in milligrams
+
+``` {r, basic_plot}
+# Boxplot
+boxplot(len ~ supp * dose, data=ToothGrowth, ylab="Tooth Length", 
+        main="Comparing Tooth Growth between different \n supplements and different doses", 
+        col=c("cyan", "darkblue"))
+
+require(graphics)
+coplot(len ~ dose | supp, data = ToothGrowth, panel = panel.smooth,
+       xlab = "ToothGrowth data: length vs dose, given type of supplement")
+```
+
+***Conclusion***
+
+As we can see there are some basic assumptions that we can draw after plotting. 
+
+1. Averages of tooth length seems to increase with the supplement doses. In other words, there seems to be a relationship between applying a supplement doses and the tooth growth
+2. The tooth length averages for doses 0.5 and 0.1 differ with supplements. Both averages of supplement OJ are bigger than averages of supplemet VC.
+3. The tooth lenght averages for dose 2.0 seem to be equal for the supplements, but it looks like variances are completely different.
+4. OJ supplement is more effective than VC.
+
+## Provide a basic summary of the data
+```{r, basic_summary}
+summary(ToothGrowth)
+
+table(ToothGrowth$supp,ToothGrowth$dose)
+```
+
+## Confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose
+
+As the sample size is small I am going to use T-test to make a 95% confidence interval for the difference in tooth growth depending on supplement type. The assumption here is that this is a paired test so there is no other cause of tooth length differences other than supplement.
+
+***Null-hypothesis: *** 
+OJ supplement has more impact than VC. 
+
+#### Confidence interval manual calculation. 
+
+From the ***Lecture 8*** we know that the confidence interval for different groups must be calculated as follows:
+
+- a $(1 - \alpha)\times 100\%$ confidence interval for $\mu_y - \mu_x$ is
+$$
+    \bar Y - \bar X \pm t_{n_x + n_y - 2, 1 - \alpha/2}S_p\left(\frac{1}{n_x} + \frac{1}{n_y}\right)^{1/2}
+$$
+- The pooled variance estimator is $$S_p^2 = \{(n_x - 1) S_x^2 + (n_y - 1) S_y^2\}/(n_x + n_y - 2)$$
+- Assuming a constant variance across the two groups
+
+Let's calculate this manually.
+```{r, hypotesis_testing_manual}
+lenOJ<-ToothGrowth[ToothGrowth$supp=="OJ",]$len
+lenVC<-ToothGrowth[ToothGrowth$supp=="VC",]$len
+
+nOJ <- length(lenOJ)
+nVC <- length(lenVC)
+
+# the pooled variance estimator for independent groups is:
+sp <- sqrt(((nOJ - 1)*sd(lenOJ)^2 + (nVC-1)*sd(lenVC)^2) / (nOJ + nVC - 2))
+
+# find out mean difference
+mean_diff <- mean(lenOJ) - mean(lenVC)
+semd <- sp * sqrt(1 / nOJ + 1/nVC)
+mean_diff + c(-1, 1) * qt(.975, nVC + nOJ - 2) * semd
+```
+
+Assuming that these two groups don't have constant variances, calculate the confidence interval and test 
+the null-hypothesis again.
+```{r, hypotesis_testing_r}
+# As these two groups are independent and don't have the same variances
+# we use both paried and var.equal to be FALSE
+t.test(lenOJ,lenVC, paired=FALSE,var.equal=FALSE)$conf.int
+```
+
+***Conclusion***
+
+As these both intervals above cover 0, the assumption that the supplement OJ has more impact than VC on the length of tooth failed, i.e. ***Null-hypothesis is not true***.
+
+## Confidence intervals for particular doses
+
+Let's calculate confidence interval for particular doses: 0.5, 1.0, 2.0 . We assume that groups are independent and don't have constant variances. 
+
+#### Dose 0.5
+Null-hypothesis is that summplement OJ has more impact than VC on tooth length if using dose 0.5
+```{r, hypothesis_testing_particular_doses_0_5}
+lenOJ<-ToothGrowth[ToothGrowth$supp=="OJ" & ToothGrowth$dose == .5,]$len
+lenVC<-ToothGrowth[ToothGrowth$supp=="VC" & ToothGrowth$dose == .5,]$len
+
+t.test(lenOJ,lenVC, paired=FALSE,var.equal=FALSE)$conf.int
+```
+***Conclusion***
+
+Confidence interval doesn't cover zero, hence Null-hypothesis is true if we use dose 0.5 .
+
+#### Dose 1.0
+Null-hypothesis is that summplement OJ has more impact than VC on tooth length if using dose 1.0
+```{r, hypothesis_testing_particular_doses_1_0}
+lenOJ<-ToothGrowth[ToothGrowth$supp=="OJ" & ToothGrowth$dose == 1.0,]$len
+lenVC<-ToothGrowth[ToothGrowth$supp=="VC" & ToothGrowth$dose == 1.0,]$len
+
+t.test(lenOJ,lenVC, paired=FALSE,var.equal=FALSE)$conf.int
+```
+***Conclusion***
+
+Null-hypothesis is true if we use dose 1.0 .
+
+#### Dose 2.0
+Null-hypothesis is that summplement OJ has more impact than VC on tooth length if using dose 2.0
+```{r, hypothesis_testing_particular_doses_2_0}
+lenOJ<-ToothGrowth[ToothGrowth$supp=="OJ" & ToothGrowth$dose == 2.0,]$len
+lenVC<-ToothGrowth[ToothGrowth$supp=="VC" & ToothGrowth$dose == 2.0,]$len
+
+t.test(lenOJ,lenVC, paired=FALSE,var.equal=FALSE)$conf.int
+```
+***Conclusion***
+
+Confidence interval does cover zero, hence Null-hypothesis is false if we use dose 2.0 .
+
+## Conclusion
+
+1. We have strong statistical reasons to beleive that the supplement OJ is not more effective than VC on the whole.
+2. In addition we have shown in the report that OJ supplement is more effective if we use doses 0.5 and 1.0 .
+
+
+
+
+
+
+
+
+

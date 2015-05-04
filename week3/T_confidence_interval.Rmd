@@ -1,0 +1,81 @@
+---
+title: "T_confidence_interval"
+author: "Yevgeny V.Yorkhov"
+date: "04/25/2015"
+output: html_document
+---
+
+# T-confidence interval
+
+* Invented by William Gosset (under the pseudonym "Student") in 1908
+* has thicker tails than Normal
+* Is indexed by ***degrees of freedom*** (df); gets more like a standard normal as df gets larger
+* it assumes that underlying data are iid Gaussian with the result that (X - mu) / (S/sqrt(n)) follows Gosset's T-distribution with ***n-1*** degrees of freedom
+* Interval is ***X+-t(n-1)S/sqrt(n)*** is the relevant quantile
+
+This code illustrates that T-distribution gets more like a standard normal as ***df*** gets larger
+```{r, t_vs_normal}
+k <- 1000
+xvals <- seq(-5, 5, length = k)
+myplot <- function(df){
+ d <- data.frame(y = c(dnorm(xvals), dt(xvals, df)),
+ x = xvals,
+ dist = factor(rep(c("Normal", "T"), c(k,k))))
+ g <- ggplot(d, aes(x = x, y = y))
+ g <- g + geom_line(size = 2, aes(colour = dist))
+ g
+}
+#manipulate(myplot(mu), mu = slider(1, 20, step = 1))
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+pvals <- seq(.5, .99, by = .01)
+myplot2 <- function(df){
+  d <- data.frame(n= qnorm(pvals),t=qt(pvals, df),
+         p = pvals)
+  g <- ggplot(d, aes(x= n, y = t))
+
+  g <- g + geom_abline(size = 2, col = "lightblue")
+  g <- g + geom_line(size = 2, col = "black")
+  g <- g + geom_vline(xintercept = qnorm(0.975))
+  g <- g + geom_hline(yintercept = qt(0.975, df))
+  g
+}
+manipulate(myplot2(df), df = slider(1, 20, step = 1))
+```
+
+In R data(sleep) brings up the sleep data originally analyzed in Gosset's Biometrika paper,
+which shows the increase in hours for 10 patients on two soporific drugs. R treats the data as two
+groups rather than paired.
+```{r}
+data(sleep)
+head(sleep)
+
+g1 <- sleep$extra[1 : 10]; g2 <- sleep$extra[11 : 20]
+difference <- g2 - g1
+mn <- mean(difference); s <- sd(difference); n <- 10
+
+mn + c(-1, 1) * qt(.975, n-1) * s / sqrt(n)
+t.test(difference)
+t.test(g2, g1, paired = TRUE)
+t.test(extra ~ I(relevel(group, 2)), paired = TRUE, data = sleep)
+
+```
+
+
+```{r}
+library(datasets); data(ChickWeight); library(reshape2)
+##define weight gain or loss
+wideCW <- dcast(ChickWeight, Diet + Chick ~ Time, value.var = "weight")
+names(wideCW)[-(1 : 2)] <- paste("time", names(wideCW)[-(1 : 2)], sep = "")
+library(dplyr)
+
+wideCW <- mutate(wideCW,
+  gain = time21 - time0
+  )
+
+```
+

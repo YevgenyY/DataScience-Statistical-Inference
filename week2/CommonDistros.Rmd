@@ -1,0 +1,86 @@
+---
+title: "Common distros"
+author: "Yevgeny V.Yorkhov"
+date: "04/19/2015"
+output: html_document
+---
+
+## Normal Distribution
+
+If Z is ***standard normal*** and X is ***normal***:
+
+Z = (X - mu) / sigma ~ N(0,1)
+
+and
+
+X = mu + sigma*Z ~ N(mu, sigma^2)
+
+### Quantiles
+* Approximately 68%, 95%, 99% of the normal density lies within 1, 2 and 3 standard deviations from the mean (mu), respectively
+* -1.28, -1.645, -1,96 and -2.33 are 10th, 5th, 2.5th and 1st percentiles of the standard normal distribution respectively
+* By symmetry 1.28, 1.645, 1.96 and 2.33 are the 90th, 95th, 97.5th and 99th percentiles of the standard normal distribution respectively
+
+### Examples
+#### 1. What is 95th quantile of normal distribution
+```{r, quantile95}
+mu = 0
+sd = 1
+qnorm(.95, mean = mu, sd=sd)
+```
+
+#### 2. Ad clicks 1
+Assume that the number of daily ad clicks for a company is (approximately) normally distributed with a mean of 1020 and standard deviation of 50. What is the probability of getting more than 1160 clicks a day?
+```{r, adclicks1}
+pnorm(1160, mean=1020, sd=50, lower.tail=FALSE)
+# or we can see that 1160 is 2.8 standard deviation from the mean
+# hence
+pnorm(2.8, lower.tail=FALSE)
+```
+#### 2. Ad clicks 2
+Assume that the number of daily ad clicks for a company is (approximately) normally distributed with a mean of 1020 and standard deviation of 50. What number of daily ad clicks would represent the one 75% of days have fewer clicks (assuming days are independent and identically distributed)?
+```{r,adclocks2}
+qnorm(.75, mean=1020, sd=50)
+```
+
+### Plots
+```{r}
+plot(rnorm(1000, mean=0, sd=1))
+hist(rnorm(1000, mean=0, sd=1))
+```
+
+## Binomial distribution
+### Bernoulli distribution
+`P(X=x) = p^x*(1-p)^(1-x)`
+
+* mean = p
+* variance = p(1-p)
+
+### Binomial trials
+In specific, let X1, X2, ... Xn be iid Bernoulli (p)
+then 
+
+`X = sum(from i, till n) Xi ` 
+
+is a binomial random distribution.
+
+Binomial PMF is:
+
+`P(X=x) = choose(n,x) * p^x * (1-p)^(n-x)`
+
+### Examples
+Suppose a friend has 8 children (oh my!), 7 of which are girls and none are twins
+If each gender has probability 0.5 for each birth, what is the probability of getting
+7 or more girls out of 8 birth?
+
+```{r, binomial1}
+choose(8, 7) * 0.5^8 + choose(8, 8) * 0.5^8
+# or
+pbinom(6, size = 8, prob = 0.5, lower.tail = FALSE)
+```
+
+### Plots
+```{r, plots_binomial}
+plot(rbinom(1000, size=10, prob=0.70))
+hist(rbinom(1000, size=10, prob=0.70))
+```
+

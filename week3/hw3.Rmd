@@ -1,0 +1,124 @@
+---
+title: "Homework week3"
+author: "Yevgeny V.Yorkhov"
+date: "04/25/2015"
+output: html_document
+---
+
+# Q1 Find Load the data set mtcars in the datasets R package. Calculate a 95% confidence interval to the nearest MPG for the variable mpg.
+
+```{r}
+library(datasets)
+data(mtcars)
+
+head(mtcars$mpg)
+
+t.test(mtcars$mpg)
+```
+
+#Q2 Consider the mtcars dataset. Construct a 95% T interval for MPG comparing 4 to 6 cylinder car (subtracting in the order of 4 - 6) assume a constant variance.
+```{r}
+m1 <- mtcars[mtcars$cyl==4,]$mpg
+m2 <- mtcars[mtcars$cyl==6,]$mpg
+t.test(m1, m2, paired=FALSE, var.equal=TRUE)
+
+```
+
+#Q3
+Suppose that 18 obese subjects were randomized, 9 each, to a new diet pill and a placebo. Subjects' body mass indices (BMIs) were measured at a baseline and again after having received the treatment or placebo for four weeks. The average difference from follow-up to the baseline (followup - baseline) was 3 kg/m2 for the treated group and 1 kg/m2 for the placebo group. The corresponding standard deviations of the differences was 1.5 kg/m2 for the treatment group and 1.8 kg/m2 for the placebo group. The study aims to answer whether the change in BMI over the four week period appear to differ between the treated and placebo groups.
+
+What is the pooled variance estimate? (to 2 decimal places)?
+```{r}
+n1 <- n2 <- 9 # group size
+x1 <- 3 # pill group mean
+x2 <- 1 # placebo group mean
+
+s1 <- 1.5 # pill group variance
+s2 <- 1.8 # placebo group variance
+
+spsq <- ( (n1 - 1) * s1^2 + (n2 - 1) * s2^2) / (n1 + n2 - 2)
+spsq
+```
+# Q4
+In a population of interest, a sample of 9 men yielded a sample average brain volume of 1,100cc and a standard deviation of 30cc. What is a 95% Student's T confidence interval for the mean brain volume in this new population?
+
+```{r}
+n <- 9 # sample size
+avg <- 1100 # average
+s <- 30 # sample error
+
+error <- qt(0.975, df=n-1)*s/sqrt(n) # t-error
+left <- avg-error
+right <-avg+error
+
+left
+right
+
+```
+
+#Q5
+A diet pill is given to 9 subjects over six weeks. The average difference in weight (follow up - baseline) is -2 pounds. What would the standard deviation of the difference in weight have to be for the upper endpoint of the 95% T confidence interval to touch 0?
+
+```{r}
+n <- 9
+avg <- -2
+# confidence interval is avg + or - qt(.975, n-1)*S/sqrt(n)
+# so
+s <- 2*(sqrt(n))/qt(.975,df=n-1)
+s
+
+```
+
+#Q6
+In a study of emergency room waiting times, investigators consider a new and the standard triage systems. To test the systems, administrators selected ***20*** nights and randomly assigned the new triage system to be used on 10 nights and the standard system on the remaining 10 nights. They calculated the nightly median waiting time (MWT) to see a physician. The ***average MWT*** for the new system was ***3*** hours with a ***variance of 0.60*** while the average MWT for the ***old system*** was ***5*** hours with a ***variance of 0.68***. Consider the 95% confidence interval estimate for the differences of the mean MWT associated with the new system. Assume a constant variance. What is the interval? Subtract in this order (New System - Old System).
+
+```{r}
+n1 <- 10
+n2 <- 10
+mwt1 <- 3
+mwt2 <- 5
+
+var1 <- .60
+var2 <- .68
+
+sp <- sqrt( ((n1 - 1)*var1 + (n2 - 1)*var2) / (n1 + n2 - 2) )
+ci95 <- mwt1 - mwt2 + c(-1,1) * qt(.975, df = n1+n2-2) * sp * sqrt(1/n1 + 1/n2)
+
+ci95
+
+```
+
+#Q7
+To further test the hospital triage system, administrators selected 200 nights and randomly assigned a new triage system to be used on 100 nights and a standard system on the remaining 100 nights. They calculated the nightly median waiting time (MWT) to see a physician. The average MWT for the new system was 4 hours with a standard deviation of 0.5 hours while the average MWT for the old system was 6 hours with a standard deviation of 2 hours. Consider the hypothesis of a decrease in the mean MWT associated with the new treatment. What does the 95% independent group confidence interval with unequal variances suggest vis a vis this hypothesis? (Because there's so many observations per group, just use the Z quantile instead of the T.)
+
+```{r}
+n1 <- 100
+n2 <- 100
+mwt1 <- 4
+mwt2 <- 6
+s1 <- 0.5
+s2 <- 2
+
+sp <- sqrt( ((n1 - 1)*s1^2 + (n2 - 1)*s2^2) / (n1 + n2 - 2) )
+ci95 <- mwt1 - mwt2 + c(-1,1) * qt(.975, df = n1+n2-2) * sp * sqrt(1/n1 + 1/n2)
+
+ci95
+```
+
+#Q8
+Suppose that 18 obese subjects were randomized, 9 each, to a new diet pill and a placebo. Subjects’ body mass indices (BMIs) were measured at a baseline and again after having received the treatment or placebo for four weeks. The average difference from follow-up to the baseline (followup - baseline) was −3 kg/m2 for the treated group and 1 kg/m2 for the placebo group. The corresponding standard deviations of the differences was 1.5 kg/m2 for the treatment group and 1.8 kg/m2 for the placebo group. Does the change in BMI over the four week period appear to differ between the treated and placebo groups? Assuming normality of the underlying data and a common population variance, calculate the relevant *90%* t confidence interval. Subtract in the order of (Treated - Placebo) with the smaller (more negative) number first.
+```{r,q8}
+quantile <- .95 # 90% means 5% on both sides
+n1 <- 9
+n2 <- 9
+avg1 <- -3
+avg2 <- 1
+s1 <- 1.5
+s2 <- 1.8
+
+sp <- sqrt( ((n1 - 1)*s1^2 + (n2 - 1)*s2^2) / (n1 + n2 - 2) )
+ci90 <- avg1 - avg2 + c(-1,1) * qt(quantile, df = n1+n2-2) * sp * sqrt(1/n1 + 1/n2)
+
+ci90
+
+```
